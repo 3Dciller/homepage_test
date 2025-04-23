@@ -4,4 +4,4 @@
 
 ## 내용
 
-- index.html: 메인 웹페이지 
+- index.html: 메인 웹페이지

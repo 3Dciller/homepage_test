@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My GitHub Page</title>
+    <title>똥 피하기 게임</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             min-height: 100vh;
             background-color: #f0f2f5;
@@ -21,6 +21,7 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
         }
         h1 {
             color: #1a73e8;
@@ -28,12 +29,160 @@
         p {
             color: #5f6368;
         }
+        #gameCanvas {
+            border: 2px solid #333;
+            border-radius: 8px;
+            background-color: #fff;
+        }
+        #score {
+            font-size: 24px;
+            margin: 10px 0;
+            color: #1a73e8;
+        }
+        #startButton {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        #startButton:hover {
+            background-color: #1557b0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>환영합니다!</h1>
-        <p>이 페이지는 GitHub에서 호스팅되고 있습니다.</p>
+        <h1>똥 피하기 게임</h1>
+        <p>방향키로 캐릭터를 움직여서 떨어지는 똥을 피하세요!</p>
     </div>
+    <div id="score">점수: 0</div>
+    <button id="startButton">게임 시작</button>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const startButton = document.getElementById('startButton');
+
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height - 30,
+            width: 30,
+            height: 30,
+            speed: 5
+        };
+
+        let poops = [];
+        let score = 0;
+        let gameLoop;
+        let isGameRunning = false;
+        let keys = {};
+
+        class Poop {
+            constructor() {
+                this.width = 20;
+                this.height = 20;
+                this.x = Math.random() * (canvas.width - this.width);
+                this.y = -this.height;
+                this.speed = 3 + Math.random() * 2;
+            }
+
+            draw() {
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            update() {
+                this.y += this.speed;
+                return this.y > canvas.height;
+            }
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#1a73e8';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        function clear() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function checkCollision(poop) {
+            return player.x < poop.x + poop.width &&
+                   player.x + player.width > poop.x &&
+                   player.y < poop.y + poop.height &&
+                   player.y + player.height > poop.y;
+        }
+
+        function gameOver() {
+            isGameRunning = false;
+            clearInterval(gameLoop);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('게임 오버!', canvas.width/2, canvas.height/2);
+            startButton.style.display = 'block';
+        }
+
+        function updateGame() {
+            clear();
+            
+            if (keys.ArrowLeft && player.x > 0) {
+                player.x -= player.speed;
+            }
+            if (keys.ArrowRight && player.x < canvas.width - player.width) {
+                player.x += player.speed;
+            }
+
+            if (Math.random() < 0.03) {
+                poops.push(new Poop());
+            }
+
+            poops = poops.filter(poop => {
+                if (checkCollision(poop)) {
+                    gameOver();
+                    return false;
+                }
+                if (poop.update()) {
+                    score += 10;
+                    scoreElement.textContent = `점수: ${score}`;
+                    return false;
+                }
+                poop.draw();
+                return true;
+            });
+
+            drawPlayer();
+        }
+
+        function startGame() {
+            isGameRunning = true;
+            score = 0;
+            scoreElement.textContent = `점수: ${score}`;
+            poops = [];
+            player.x = canvas.width / 2;
+            startButton.style.display = 'none';
+            gameLoop = setInterval(updateGame, 1000 / 60);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        startButton.addEventListener('click', startGame);
+    </script>
 </body>
 </html> 
